@@ -1,0 +1,2 @@
+039f9161ac6f1f18ee77af4a1a695d38adcb9a4455b9d655d42529f53db4284d  empresa/clientes/clientes.csv
+16a48971d89a6955eebc6777039b4a9237cc835ead1ed40926cdfef2bfd9210c  empresa/contabilidad/facturas.txt
