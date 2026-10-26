@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SGSI TecnoSoluciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tablero de operaciones de seguridad — barra de pestañas fija, ficha de la empresa, y paneles tipo registro con códigos ISO como metadatos. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --line:#d3dae1;
+  --fg:#16212b; --muted:#56636f; --accent:#1d4e6b; --accent-soft:#dbe8f0; --focus:#2f7fb0;
+  --bajo:#2e7d4f; --bajo-bg:#d9efe1; --medio:#8a6400; --medio-bg:#fbecc0;
+  --alto:#b4510f; --alto-bg:#fbdcc4; --critico:#b3261e; --critico-bg:#f6d1ce;
+  --cell-bajo:#bfe3cb; --cell-medio:#f6dd8f; --cell-alto:#f4b98d; --cell-critico:#e98a83;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --surface:#16202a; --surface-2:#1d2a35; --line:#2b3a47;
+  --fg:#e3eaf0; --muted:#97a6b3; --accent:#8cc3e3; --accent-soft:#1d3444; --focus:#8cc3e3;
+  --bajo:#7fd19e; --bajo-bg:#1b3527; --medio:#f0cd6a; --medio-bg:#3a3014;
+  --alto:#f4a467; --alto-bg:#40281a; --critico:#f18b83; --critico-bg:#45201e;
+  --cell-bajo:#2b5a3d; --cell-medio:#6b5718; --cell-alto:#7a4421; --cell-critico:#8c302a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --surface:#16202a; --surface-2:#1d2a35; --line:#2b3a47;
+  --fg:#e3eaf0; --muted:#97a6b3; --accent:#8cc3e3; --accent-soft:#1d3444; --focus:#8cc3e3;
+  --bajo:#7fd19e; --bajo-bg:#1b3527; --medio:#f0cd6a; --medio-bg:#3a3014;
+  --alto:#f4a467; --alto-bg:#40281a; --critico:#f18b83; --critico-bg:#45201e;
+  --cell-bajo:#2b5a3d; --cell-medio:#6b5718; --cell-alto:#7a4421; --cell-critico:#8c302a;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.mono{font-family:var(--mono)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Cabecera */
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.ficha{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;justify-content:space-between;padding-block:22px 16px}
+.ficha h1{font-size:clamp(26px,4vw,38px);font-weight:800;font-stretch:80%;line-height:1.05}
+.ficha .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ficha .meta{display:grid;grid-template-columns:auto auto;gap:2px 14px;font-size:13px;color:var(--muted)}
+.ficha .meta b{color:var(--fg);font-weight:500}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{font:600 14px var(--body);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:12px 12px 10px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--fg)}
+
+main{padding-block:28px 56px}
+section.view{display:grid;gap:28px}
+.section-head{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.section-head h2{font-size:24px;font-weight:700;font-stretch:85%}
+.section-head p{margin:0;color:var(--muted);max-width:64ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px}
+.panel h3{font-size:17px;font-weight:700;font-stretch:90%;margin-bottom:12px}
+.note{font-size:13px;color:var(--muted)}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:2px}
+.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi .value{font-family:var(--display);font-size:32px;font-weight:800;font-stretch:80%;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .sub{font-size:13px;color:var(--muted)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.two>*{min-width:0}
+
+/* Niveles */
+.lvl{display:inline-block;font:600 12px var(--body);padding:2px 9px;border-radius:999px;white-space:nowrap}
+.lvl.Bajo{background:var(--bajo-bg);color:var(--bajo)}
+.lvl.Medio{background:var(--medio-bg);color:var(--medio)}
+.lvl.Alto{background:var(--alto-bg);color:var(--alto)}
+.lvl.Crítico{background:var(--critico-bg);color:var(--critico)}
+
+/* Barras comparativas */
+.bars{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:center;font-size:13px}
+.bar-track{display:grid;gap:3px}
+.bar{height:14px;border-radius:3px;display:flex;align-items:center;font:500 11px var(--mono);padding-left:6px;min-width:22px;transition:width .3s}
+.bar.inh{background:var(--surface-2);color:var(--fg)}
+.bar.res{background:var(--accent);color:var(--surface)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* Mapa de calor */
+.heat{display:grid;grid-template-columns:28px repeat(5,minmax(0,1fr));gap:4px;font-size:12px}
+.heat .ax{display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:var(--mono)}
+.heat .cell{min-height:56px;border-radius:4px;padding:5px;display:flex;flex-wrap:wrap;gap:3px;align-content:flex-start}
+.heat .cell.Bajo{background:var(--cell-bajo)}.heat .cell.Medio{background:var(--cell-medio)}
+.heat .cell.Alto{background:var(--cell-alto)}.heat .cell.Crítico{background:var(--cell-critico)}
+.chip{font:500 11px var(--mono);background:var(--surface);color:var(--fg);border-radius:3px;padding:1px 5px}
+.heat-wrap{display:grid;gap:6px}
+.heat-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+
+/* Tablas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.mono{white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);text-align:center}
+td .sm{font-size:13px;color:var(--muted)}
+select,input,textarea{font:inherit;font-size:14px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:6px 8px}
+select.pi{padding:3px 4px;font-family:var(--mono)}
+.btn{font:600 14px var(--body);border-radius:4px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Laboratorio */
+.labs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.lab{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+.lab .head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.lab .code{font:500 13px var(--mono);color:var(--muted)}
+.lab h3{font-size:17px;font-weight:700;font-stretch:90%;margin:0}
+.lab .tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font:500 11px var(--mono);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--muted)}
+.ok{font:600 12px var(--body);color:var(--bajo);background:var(--bajo-bg);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.lab p{margin:0;font-size:14px}
+.lab pre{margin:0;background:var(--surface-2);border-radius:4px;padding:8px 10px;font:12px/1.5 var(--mono);overflow-x:auto;white-space:pre}
+
+/* Incidentes */
+form.inc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+form.inc label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+form.inc .wide{grid-column:1/-1}
+form.inc textarea{min-height:64px;resize:vertical}
+.status{font-size:13px;color:var(--muted)}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+.prio{font-weight:600}
+.prio.Crítica{color:var(--critico)}.prio.Alta{color:var(--alto)}.prio.Media{color:var(--medio)}.prio.Baja{color:var(--bajo)}
+footer{border-top:1px solid var(--line);padding-block:18px;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:520px){.ficha .meta{grid-template-columns:1fr}.heat .cell{min-height:44px}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap ficha">
+    <div>
+      <div class="eyebrow">ISO/IEC 27001:2022 · Sistema de Gestión de Seguridad de la Información</div>
+      <h1>SGSI TecnoSoluciones S.A.S.</h1>
+    </div>
+    <div class="meta">
+      <span>Equipo</span><b>Julián R. Trujillo S. · Brandon A. Achury C.</b>
+      <span>Docente</span><b>Oscar Barragán</b>
+      <span>Escenario</span><b>Empresa ficticia, uso académico</b>
+    </div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Secciones">
+  <div class="wrap" role="tablist">
+    <button role="tab" data-tab="resumen">Resumen</button>
+    <button role="tab" data-tab="riesgos">Matriz de riesgos</button>
+    <button role="tab" data-tab="activos">Activos</button>
+    <button role="tab" data-tab="tratamiento">Tratamiento</button>
+    <button role="tab" data-tab="laboratorio">Laboratorio</button>
+    <button role="tab" data-tab="incidentes">Incidentes</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- RESUMEN -->
+  <section class="view" id="v-resumen">
+    <div class="section-head">
+      <h2>Estado del SGSI</h2>
+      <p>Riesgo inherente frente al riesgo residual estimado tras aplicar los controles propuestos, y resultado de la validación práctica en laboratorio.</p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="two">
+      <div class="panel">
+        <h3>Riesgos por nivel</h3>
+        <div class="bars" id="bars"></div>
+        <div class="legend"><span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>Inherente</span><span><i style="background:var(--accent)"></i>Residual estimado</span></div>
+      </div>
+      <div class="panel">
+        <h3>Prioridades de tratamiento</h3>
+        <div id="top-risks"></div>
+      </div>
+    </div>
+    <p class="note">Escala del proyecto (sección 9.4 del informe): R = P × I. Bajo 1–4 · Medio 5–9 · Alto 10–16 · Crítico 17–25. Las valoraciones son estimaciones académicas y deben validarse con datos reales.</p>
+  </section>
+
+  <!-- RIESGOS -->
+  <section class="view" id="v-riesgos" hidden>
+    <div class="section-head">
+      <h2>Matriz de riesgos</h2>
+      <p>Cambia la probabilidad (P) o el impacto (I) de un riesgo para simular otro escenario: el nivel, el mapa de calor y el resumen se recalculan al instante. Los cambios no se guardan.</p>
+    </div>
+    <div class="two">
+      <div class="panel heat-wrap"><h3>Riesgo inherente</h3><div class="heat" id="heat-inh"></div><div class="heat-cap"><span>↑ Probabilidad</span><span>Impacto →</span></div></div>
+      <div class="panel heat-wrap"><h3>Riesgo residual estimado</h3><div class="heat" id="heat-res"></div><div class="heat-cap"><span>↑ Probabilidad</span><span>Impacto →</span></div></div>
+    </div>
+    <div class="toolbar"><button class="btn ghost" id="reset">Restaurar valores del informe</button><span class="status" id="sim-status"></span></div>
+    <div class="tbl-wrap"><table id="t-riesgos"></table></div>
+  </section>
+
+  <!-- ACTIVOS -->
+  <section class="view" id="v-activos" hidden>
+    <div class="section-head">
+      <h2>Inventario de activos</h2>
+      <p>Valoración de confidencialidad (C), integridad (I) y disponibilidad (D) de 1 a 5. La criticidad es el mayor de los tres valores.</p>
+    </div>
+    <div class="tbl-wrap"><table id="t-activos"></table></div>
+  </section>
+
+  <!-- TRATAMIENTO -->
+  <section class="view" id="v-tratamiento" hidden>
+    <div class="section-head">
+      <h2>Plan de tratamiento</h2>
+      <p>Acción propuesta para cada riesgo, el control del Anexo A de ISO/IEC 27001:2022 que la respalda y si fue validada en el laboratorio.</p>
+    </div>
+    <div class="tbl-wrap"><table id="t-trat"></table></div>
+  </section>
+
+  <!-- LABORATORIO -->
+  <section class="view" id="v-laboratorio" hidden>
+    <div class="section-head">
+      <h2>Validación en laboratorio</h2>
+      <p>Seis controles ejecutados el 25 de octubre de 2026 en un entorno propio y aislado (GitHub Codespaces, Ubuntu 24.04). No se probó ningún sistema de terceros.</p>
+    </div>
+    <div class="labs" id="labs"></div>
+    <p class="note">Procedimiento completo y comandos en el repositorio: <a href="https://github.com/trujillojulianrene-art/DISE-O-DE-UN-SISTEMA-DE-GESTI-N-DE-SEGURIDAD-DE-LA-INFORMACI-N-SGSI-" target="_blank" rel="noopener">github.com/trujillojulianrene-art/…SGSI-</a> (archivo LABORATORIO.md).</p>
+  </section>
+
+  <!-- INCIDENTES -->
+  <section class="view" id="v-incidentes" hidden>
+    <div class="section-head">
+      <h2>Registro de incidentes</h2>
+      <p>Formato del Anexo A del informe. La prioridad se calcula con impacto × urgencia, con los mismos rangos de la matriz de riesgos. En esta versión pública los registros nuevos se guardan en tu navegador.</p>
+    </div>
+    <div class="panel" id="inc-form-panel">
+      <h3>Reportar un incidente</h3>
+      <form class="inc" id="inc-form">
+        <label>Persona que reporta<input id="f-reporta" required maxlength="80" placeholder="Nombre o cargo"></label>
+        <label>Activo afectado<select id="f-activo" required></select></label>
+        <label>Tipo<select id="f-tipo" required>
+          <option>Phishing</option><option>Malware</option><option>Pérdida de información</option><option>Acceso no autorizado</option><option>Indisponibilidad</option><option>Otro</option>
+        </select></label>
+        <label>Impacto (1–5)<select id="f-impacto" class="pi"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+        <label>Urgencia (1–5)<select id="f-urgencia" class="pi"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+        <label>Responsable de atención<input id="f-resp" maxlength="60" value="TI"></label>
+        <label class="wide">Descripción y síntomas<textarea id="f-desc" required maxlength="600" placeholder="Qué pasó, cuándo y cómo se detectó"></textarea></label>
+        <label class="wide">Acciones iniciales y evidencias<textarea id="f-acc" maxlength="600" placeholder="Qué se hizo primero y qué evidencia se conservó"></textarea></label>
+        <div class="toolbar wide"><button class="btn" type="submit" id="f-submit">Registrar incidente</button><span class="status" id="f-status"></span></div>
+      </form>
+    </div>
+    <div class="tbl-wrap"><table id="t-inc"></table></div>
+  </section>
+</main>
+<footer><div class="wrap">Proyecto académico de Seguridad de la Información. TecnoSoluciones S.A.S. es una empresa ficticia; las valoraciones son ilustrativas.</div></footer>
+
+<script>
+const ACTIVOS=[
+ ["A01","Base de datos de clientes","Información","Confidencial","Responsable de servicio / TI",5,4,4],
+ ["A02","Información contable y facturación","Información","Confidencial","Administración",5,5,4],
+ ["A03","Correo corporativo","Servicio","Interna","TI",4,3,5],
+ ["A04","Computadores de trabajo","Hardware","Uso interno","TI y usuarios asignados",3,3,4],
+ ["A05","Almacenamiento en nube","Servicio","Según datos","TI",4,4,4],
+ ["A06","Red y router","Infraestructura","Crítica para conectividad","TI",2,3,5],
+ ["A07","Aplicaciones de gestión","Software","Interna","Dueño del proceso",3,4,4],
+ ["A08","Documentación de proyectos","Información","Interna o confidencial","Líder de proyecto",4,3,3],
+ ["A09","Dispositivos móviles","Hardware","Según información","Usuario asignado",3,2,2],
+ ["A10","Credenciales y secretos","Información","Restringida","TI y cada usuario",5,5,3]];
+const RIESGOS0=[
+ {id:"R01",a:"A01",e:"Acceso no autorizado por permisos excesivos o cuentas compartidas",p:4,i:5,pr:2,ir:4,acc:"Cuentas individuales, MFA, mínimo privilegio y revisión trimestral de permisos",iso:"5.15 · 5.18 · 8.2 · 8.5",lab:"L-03, L-06"},
+ {id:"R02",a:"A02",e:"Pérdida de archivos por respaldo insuficiente o no restaurable",p:3,i:5,pr:1,ir:4,acc:"Respaldo automático, copia separada y prueba de restauración trimestral",iso:"8.13 · 5.30",lab:"L-01"},
+ {id:"R03",a:"A03",e:"Phishing con robo de credenciales y acceso a cuentas",p:4,i:4,pr:2,ir:3,acc:"Capacitación, MFA y canal de reporte de correos sospechosos",iso:"6.3 · 6.8 · 8.5",lab:"L-06"},
+ {id:"R04",a:"A04",e:"Ransomware por software desactualizado o archivo malicioso",p:4,i:5,pr:2,ir:3,acc:"Parches, antimalware, privilegios limitados y copias protegidas",iso:"8.7 · 8.8 · 8.13",lab:"L-01"},
+ {id:"R05",a:"A05",e:"Exposición de documentos por enlaces o permisos mal configurados",p:3,i:5,pr:2,ir:3,acc:"Revisión de enlaces públicos y permisos de carpetas",iso:"5.23 · 5.15",lab:""},
+ {id:"R06",a:"A06",e:"Intrusión o acceso no autorizado por configuración débil",p:3,i:4,pr:2,ir:3,acc:"Configuración segura, cierre de servicios innecesarios, firmware al día",iso:"8.20 · 8.9 · 8.8",lab:"L-05"},
+ {id:"R07",a:"A08",e:"Divulgación accidental por falta de clasificación",p:3,i:4,pr:2,ir:3,acc:"Esquema de clasificación y canales aprobados de envío",iso:"5.12 · 5.10 · 6.3",lab:""},
+ {id:"R08",a:"A09",e:"Pérdida o robo de dispositivo sin bloqueo ni borrado remoto",p:3,i:3,pr:2,ir:2,acc:"Bloqueo automático, cifrado, inventario y borrado remoto",iso:"8.1 · 8.24",lab:"L-02"},
+ {id:"R09",a:"A10",e:"Toma de cuentas por contraseñas reutilizadas o débiles",p:4,i:5,pr:2,ir:3,acc:"Contraseñas únicas con hash y sal, vencimiento, gestor aprobado y MFA",iso:"5.17 · 8.5",lab:"L-04, L-06"},
+ {id:"R10",a:"A07",e:"Indisponibilidad por falla técnica o dependencia de un proveedor",p:3,i:4,pr:2,ir:3,acc:"Plan de continuidad, contactos de soporte y prueba de recuperación",iso:"5.29 · 5.30 · 5.19",lab:""}];
+const LABS=[
+ {c:"L-01",t:"Copia de seguridad y restauración",iso:"8.13",r:"R02 · R04",d:"Se respaldó la información, se borró por completo para simular un ransomware y se restauró desde la copia.",res:"Los dos archivos restaurados dieron OK en la verificación SHA-256: idénticos bit a bit al original.",cmd:"tar -czf respaldos/respaldo_2026-10-25.tar.gz empresa\nrm -rf empresa\ntar -xzf respaldos/respaldo_*.tar.gz\nsha256sum -c hash_original.txt   # OK, OK"},
+ {c:"L-02",t:"Cifrado de información confidencial",iso:"8.24",r:"R01 · R08",d:"Se cifró el archivo de clientes con AES-256 (OpenSSL, PBKDF2 con sal).",res:"El archivo cifrado es ilegible; con una clave errada responde «bad decrypt» y con la correcta se recupera el texto.",cmd:"openssl enc -aes-256-cbc -pbkdf2 -salt \\\n  -in clientes.csv -out clientes.csv.enc\nopenssl enc -d -aes-256-cbc -pbkdf2 -in clientes.csv.enc"},
+ {c:"L-03",t:"Mínimo privilegio y retiro de accesos",iso:"5.15 · 5.18 · 8.2",r:"R01",d:"Carpeta de contabilidad con permisos 770 solo para su grupo. Ana es contadora; Pedro es de soporte.",res:"Ana lee la factura y Pedro recibe «Permission denied». Al retirar a Ana del grupo pierde el acceso de inmediato.",cmd:"chmod 770 /srv/contabilidad   # drwxrwx---\nsu pedro -c 'cat facturas.txt'  # Permission denied\ngpasswd -d ana contabilidad"},
+ {c:"L-04",t:"Almacenamiento seguro de contraseñas",iso:"5.17 · 8.5",r:"R09",d:"Dos usuarios con la misma contraseña y política de vencimiento a 90 días.",res:"Hashes distintos para la misma clave (yescrypt con sal aleatoria). La contraseña vence el 23/01/2027, con aviso 7 días antes.",cmd:"grep -E '^(ana|pedro):' /etc/shadow\n# ana:$y$j9T$q2vms0rf...  pedro:$y$j9T$pBgldZLG...\nchage -M 90 ana"},
+ {c:"L-05",t:"Detección y cierre de un servicio expuesto",iso:"8.20 · 8.8",r:"R06",d:"Se dejó abierto un servidor que publicaba los archivos de la empresa y se escaneó el propio equipo con Nmap.",res:"Nmap detectó 8080/tcp abierto y los datos se descargaban sin contraseña. Tras cerrar el servicio, el puerto desaparece y la conexión es rechazada.",cmd:"nmap -p 1-10000 localhost      # 8080/tcp open\ncurl localhost:8080/empresa/clientes/clientes.csv\npkill -f \"http.server 8080\"\nnmap -p 1-10000 localhost      # 8080 cerrado"},
+ {c:"L-06",t:"Autenticación multifactor",iso:"8.5",r:"R03 · R09",d:"Se verificó la configuración de seguridad de la cuenta de GitHub del equipo.",res:"Verificación en dos pasos activa con aplicación de autenticación. GitHub marca el SMS como método menos seguro.",cmd:"Settings › Password and authentication\nTwo-factor authentication: Configurado\n(aplicación de autenticación)"}];
+
+const LV=r=>r<=4?"Bajo":r<=9?"Medio":r<=16?"Alto":"Crítico";
+const ORDER=["Crítico","Alto","Medio","Bajo"];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const actName=id=>(ACTIVOS.find(a=>a[0]===id)||[,""])[1];
+let R=RIESGOS0.map(x=>({...x}));
+
+/* Pestañas */
+const TABS=["resumen","riesgos","activos","tratamiento","laboratorio","incidentes"];
+function show(t){if(!TABS.includes(t))t="resumen";
+ document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+ TABS.forEach(x=>document.getElementById("v-"+x).hidden=x!==t);
+ try{localStorage.setItem("sgsi-tab",t)}catch(e){}}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{show(b.dataset.tab);window.scrollTo({top:0})}));
+
+/* Resumen */
+function renderSummary(){
+ const inh=R.map(r=>r.p*r.i), res=R.map(r=>r.pr*r.ir);
+ const sum=a=>a.reduce((x,y)=>x+y,0);
+ const red=1-sum(res)/sum(inh);
+ const cnt=(arr,l)=>arr.filter(v=>LV(v)===l).length;
+ const critHigh=cnt(inh,"Crítico")+cnt(inh,"Alto");
+ document.getElementById("kpis").innerHTML=[
+  ["Activos inventariados",ACTIVOS.length,`${ACTIVOS.filter(a=>Math.max(a[5],a[6],a[7])>=5).length} de criticidad alta`],
+  ["Riesgos críticos y altos",critHigh,`${cnt(res,"Crítico")+cnt(res,"Alto")} tras los controles`],
+  ["Reducción estimada",Math.round(red*100)+"%",`Σ R: ${sum(inh)} → ${sum(res)}`],
+  ["Controles en la SoA",28,"aplicables, ISO/IEC 27002:2022"],
+  ["Pruebas de laboratorio","6 / 6","superadas"]
+ ].map(k=>`<div class="kpi"><span class="label">${k[0]}</span><span class="value">${k[1]}</span><span class="sub">${k[2]}</span></div>`).join("");
+ const max=Math.max(1,...ORDER.map(l=>Math.max(cnt(inh,l),cnt(res,l))));
+ document.getElementById("bars").innerHTML=ORDER.map(l=>`<div class="bar-row"><span class="lvl ${l}">${l}</span><div class="bar-track">
+  <div class="bar inh" style="width:${cnt(inh,l)/max*100}%">${cnt(inh,l)}</div>
+  <div class="bar res" style="width:${cnt(res,l)/max*100}%">${cnt(res,l)}</div></div></div>`).join("");
+ const top=[...R].sort((a,b)=>b.p*b.i-a.p*a.i).slice(0,5);
+ document.getElementById("top-risks").innerHTML=`<table><thead><tr><th>Riesgo</th><th>R</th><th>Nivel</th><th>Residual</th></tr></thead><tbody>${top.map(r=>`<tr><td><span class="mono">${r.id}</span> ${esc(r.e)}</td><td class="num">${r.p*r.i}</td><td><span class="lvl ${LV(r.p*r.i)}">${LV(r.p*r.i)}</span></td><td><span class="lvl ${LV(r.pr*r.ir)}">${LV(r.pr*r.ir)}</span></td></tr>`).join("")}</tbody></table>`;
+}
+
+/* Mapas de calor */
+function heat(el,pk,ik){
+ let h="";
+ for(let p=5;p>=1;p--){h+=`<div class="ax">${p}</div>`;
+  for(let i=1;i<=5;i++){const ids=R.filter(r=>r[pk]===p&&r[ik]===i).map(r=>`<span class="chip">${r.id}</span>`).join("");
+   h+=`<div class="cell ${LV(p*i)}" title="P${p} × I${i} = ${p*i}">${ids}</div>`}}
+ h+=`<div></div>`+[1,2,3,4,5].map(i=>`<div class="ax">${i}</div>`).join("");
+ document.getElementById(el).innerHTML=h;
+}
+function opts(v){return [1,2,3,4,5].map(n=>`<option${n===v?" selected":""}>${n}</option>`).join("")}
+function renderRisks(){
+ document.getElementById("t-riesgos").innerHTML=`<thead><tr><th>ID</th><th>Escenario</th><th>Activo</th><th>P</th><th>I</th><th>R</th><th>Nivel</th><th>P res.</th><th>I res.</th><th>R res.</th><th>Nivel res.</th></tr></thead><tbody>${R.map((r,k)=>`<tr>
+  <td class="mono">${r.id}</td><td>${esc(r.e)}</td><td><span class="mono">${r.a}</span><div class="sm">${esc(actName(r.a))}</div></td>
+  <td><select class="pi" data-k="${k}" data-f="p" aria-label="Probabilidad ${r.id}">${opts(r.p)}</select></td>
+  <td><select class="pi" data-k="${k}" data-f="i" aria-label="Impacto ${r.id}">${opts(r.i)}</select></td>
+  <td class="num">${r.p*r.i}</td><td><span class="lvl ${LV(r.p*r.i)}">${LV(r.p*r.i)}</span></td>
+  <td><select class="pi" data-k="${k}" data-f="pr" aria-label="Probabilidad residual ${r.id}">${opts(r.pr)}</select></td>
+  <td><select class="pi" data-k="${k}" data-f="ir" aria-label="Impacto residual ${r.id}">${opts(r.ir)}</select></td>
+  <td class="num">${r.pr*r.ir}</td><td><span class="lvl ${LV(r.pr*r.ir)}">${LV(r.pr*r.ir)}</span></td></tr>`).join("")}</tbody>`;
+ heat("heat-inh","p","i"); heat("heat-res","pr","ir");
+ const changed=R.some((r,k)=>["p","i","pr","ir"].some(f=>r[f]!==RIESGOS0[k][f]));
+ document.getElementById("sim-status").textContent=changed?"Simulación activa: los valores difieren del informe.":"Valores del informe.";
+}
+document.getElementById("t-riesgos").addEventListener("change",e=>{const s=e.target;if(!s.dataset.f)return;
+ R[+s.dataset.k][s.dataset.f]=+s.value; renderAll(); s.closest("table").querySelector(`select[data-k="${s.dataset.k}"][data-f="${s.dataset.f}"]`)?.focus()});
+document.getElementById("reset").addEventListener("click",()=>{R=RIESGOS0.map(x=>({...x}));renderAll()});
+
+function renderAssets(){
+ document.getElementById("t-activos").innerHTML=`<thead><tr><th>ID</th><th>Activo</th><th>Tipo</th><th>Clasificación</th><th>Responsable</th><th>C</th><th>I</th><th>D</th><th>Criticidad</th></tr></thead><tbody>${ACTIVOS.map(a=>{const c=Math.max(a[5],a[6],a[7]);const n=c>=5?"Alta":c>=3?"Media":"Baja";const cls=c>=5?"Alto":c>=3?"Medio":"Bajo";
+  return `<tr><td class="mono">${a[0]}</td><td>${esc(a[1])}</td><td>${a[2]}</td><td>${a[3]}</td><td>${esc(a[4])}</td><td class="num">${a[5]}</td><td class="num">${a[6]}</td><td class="num">${a[7]}</td><td><span class="lvl ${cls}">${n} (${c})</span></td></tr>`}).join("")}</tbody>`;
+}
+function renderTreatment(){
+ document.getElementById("t-trat").innerHTML=`<thead><tr><th>Riesgo</th><th>Nivel</th><th>Acción propuesta</th><th>Control ISO</th><th>Validación</th></tr></thead><tbody>${[...R].sort((a,b)=>b.p*b.i-a.p*a.i).map(r=>`<tr>
+  <td><span class="mono">${r.id}</span><div class="sm">${esc(r.e)}</div></td><td><span class="lvl ${LV(r.p*r.i)}">${LV(r.p*r.i)}</span></td>
+  <td>${esc(r.acc)}</td><td class="mono" style="white-space:nowrap">${r.iso}</td>
+  <td>${r.lab?`<span class="ok">Validado · ${r.lab}</span>`:`<span class="sm">Pendiente de implementación</span>`}</td></tr>`).join("")}</tbody>`;
+}
+function renderLabs(){
+ document.getElementById("labs").innerHTML=LABS.map(l=>`<article class="lab"><div class="head"><span class="code">${l.c}</span><span class="ok">Superada</span></div>
+  <h3>${l.t}</h3><div class="tags"><span class="tag">ISO 27002 ${l.iso}</span><span class="tag">${l.r}</span></div>
+  <p>${l.d}</p><p><b>Resultado:</b> ${l.res}</p><pre>${esc(l.cmd)}</pre></article>`).join("");
+}
+function renderAll(){renderSummary();renderRisks();renderAssets();renderTreatment()}
+
+/* Incidentes (db) */
+document.getElementById("f-activo").innerHTML=ACTIVOS.map(a=>`<option value="${a[0]}">${a[0]} · ${esc(a[1])}</option>`).join("");
+const PRIO=v=>v>=17?"Crítica":v>=10?"Alta":v>=5?"Media":"Baja";
+const ESTADOS=["Abierto","En tratamiento","Recuperado","Cerrado"];
+let incidents=[], db=null, canWrite=true;
+function fmtDate(s){try{const d=new Date(s);return d.toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"})+" "+d.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})}catch(e){return s}}
+function renderIncidents(msg){
+ const t=document.getElementById("t-inc");
+ if(msg||!incidents.length){t.innerHTML=`<tbody><tr><td class="empty">${msg||"Aún no hay incidentes registrados. Usa el formulario para reportar el primero."}</td></tr></tbody>`;return}
+ t.innerHTML=`<thead><tr><th>Código</th><th>Detección</th><th>Tipo / activo</th><th>Descripción</th><th>Prioridad</th><th>Responsable</th><th>Estado</th></tr></thead><tbody>${incidents.map(x=>{const v=(+x.impacto||0)*(+x.urgencia||0);
+  return `<tr><td class="mono">${esc(x.codigo)}</td><td class="sm">${esc(fmtDate(x.fecha))}<br>${esc(x.reporta)}</td>
+  <td>${esc(x.tipo)}<div class="sm mono">${esc(x.activo)} · ${esc(actName(x.activo))}</div></td>
+  <td>${esc(x.descripcion)}${x.acciones?`<div class="sm"><b>Acciones:</b> ${esc(x.acciones)}</div>`:""}</td>
+  <td><span class="prio ${PRIO(v)}">${PRIO(v)}</span><div class="sm mono">I${esc(x.impacto)} × U${esc(x.urgencia)}</div></td>
+  <td>${esc(x.responsable)}</td>
+  <td>${canWrite&&db&&String(x._id).startsWith("loc-")?`<select data-id="${esc(x._id)}" aria-label="Estado ${esc(x.codigo)}">${ESTADOS.map(s=>`<option${s===x.estado?" selected":""}>${s}</option>`).join("")}</select>`:esc(x.estado)}</td></tr>`}).join("")}</tbody>`;
+}
+renderIncidents("Cargando el registro…");
+function setFormEnabled(on,msg){document.querySelectorAll("#inc-form input,#inc-form select,#inc-form textarea,#f-submit").forEach(e=>e.disabled=!on);
+ document.getElementById("f-status").textContent=msg||""}
+document.getElementById("t-inc").addEventListener("change",async e=>{const s=e.target;if(!s.dataset.id||!db)return;
+ s.disabled=true;try{await db.collection("incidentes").doc(s.dataset.id).update({estado:s.value})}catch(err){document.getElementById("f-status").textContent="No se pudo cambiar el estado. Intenta de nuevo."}finally{s.disabled=false}});
+document.getElementById("inc-form").addEventListener("submit",async e=>{e.preventDefault();if(!db)return;
+ const f=id=>document.getElementById(id).value.trim();
+ const n=incidents.reduce((m,x)=>Math.max(m,parseInt(String(x.codigo).replace(/\D/g,""))||0),0)+1;
+ const body={codigo:"INC-"+String(n).padStart(3,"0"),fecha:new Date().toISOString(),reporta:f("f-reporta"),activo:f("f-activo"),tipo:f("f-tipo"),
+  impacto:+f("f-impacto"),urgencia:+f("f-urgencia"),responsable:f("f-resp")||"TI",descripcion:f("f-desc"),acciones:f("f-acc"),estado:"Abierto",creado:Date.now()};
+ const btn=document.getElementById("f-submit");btn.disabled=true;document.getElementById("f-status").textContent="Guardando…";
+ try{await db.collection("incidentes").add(body);e.target.reset();document.getElementById("f-resp").value="TI";
+  document.getElementById("f-status").textContent=`${body.codigo} registrado.`}
+ catch(err){const c=err&&err.code;
+  if(c==="invalid_argument"){canWrite=false;setFormEnabled(false,"Tu acceso a esta página es de solo lectura: puedes ver el registro, pero no agregar incidentes.");renderIncidents()}
+  else document.getElementById("f-status").textContent=c==="quota_exceeded"?"El registro está lleno. Elimina incidentes antiguos para agregar nuevos.":"No se pudo guardar. Revisa tu conexión e intenta de nuevo."}
+ finally{if(canWrite)btn.disabled=false}});
+
+/* Versión GitHub Pages: sin base de datos en línea; los incidentes nuevos se guardan en este navegador. */
+const SEED=[{_id:"inc-001",codigo:"INC-001",fecha:"2026-10-26T14:15:00.000Z",reporta:"Trabajador de administración (simulación)",activo:"A03",tipo:"Phishing",impacto:4,urgencia:4,responsable:"TI",descripcion:"Ejercicio de simulación: correo que suplanta al proveedor de nube y pide «verificar la cuenta» mediante un enlace.",acciones:"No se hizo clic; se reportó por el canal definido; se conservó el encabezado del correo; TI bloqueó el remitente.",estado:"Cerrado",creado:1792937700000}];
+let local=[];try{local=JSON.parse(localStorage.getItem("sgsi-incidentes")||"[]")}catch(e){local=[]}
+const saveLocal=()=>{try{localStorage.setItem("sgsi-incidentes",JSON.stringify(local))}catch(e){}};
+const refresh=()=>{incidents=[...local,...SEED].sort((a,b)=>b.creado-a.creado);renderIncidents()};
+db={collection:()=>({add:async b=>{local.push({...b,_id:"loc-"+Date.now()});saveLocal();refresh()},
+ doc:id=>({update:async u=>{const x=local.find(i=>i._id===id);if(x){Object.assign(x,u);saveLocal()}refresh()}})})};
+document.getElementById("f-status").textContent="Versión pública: los incidentes que registres se guardan solo en este navegador.";
+refresh();
+renderAll();renderLabs();
+let start="resumen";const h=(location.hash||"").slice(1);
+if(TABS.includes(h))start=h;else{try{const s=localStorage.getItem("sgsi-tab");if(TABS.includes(s))start=s}catch(e){}}
+show(start);
+</script>
+
+</body>
+</html>
